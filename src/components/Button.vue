@@ -1,12 +1,28 @@
 <template>
-  <button :type="props.type" :class="computedClasses" :style="computedStyle" :disabled="props.disabled || props.loading"
-    :aria-disabled="props.disabled || props.loading" @click="handleClick">
+  <button v-bind="$attrs" :type="props.type" :class="[computedClasses, $attrs.class]" :style="computedStyle"
+    :disabled="props.disabled || props.loading" :aria-disabled="props.disabled || props.loading"
+    :aria-busy="props.loading" @click="handleClick">
     <template v-if="props.loading">
       <Loader class="animate-spin w-5 h-5" />
     </template>
 
     <template v-else>
-      <slot>{{ props.label }}</slot>
+      <!-- Icon Left -->
+      <component v-if="props.icon && props.iconPosition === 'left' && !props.iconOnly" :is="props.icon"
+        class="w-4 h-4 mr-2" />
+
+      <!-- Label / Slot -->
+      <template v-if="props.iconOnly && props.icon">
+        <component :is="props.icon" class="w-5 h-5" />
+      </template>
+      <template v-else>
+        <slot v-if="$slots.default">{{ props.label }}</slot>
+        <span v-else>{{ props.label }}</span>
+      </template>
+
+      <!-- Icon Right -->
+      <component v-if="props.icon && props.iconPosition === 'right' && !props.iconOnly" :is="props.icon"
+        class="w-4 h-4 ml-2" />
     </template>
   </button>
 </template>
@@ -16,7 +32,6 @@ import { computed } from 'vue'
 import { Loader } from 'lucide-vue-next'
 
 const props = withDefaults(defineProps<{
-  // Core behavior
   type?: 'button' | 'submit' | 'reset'
   label?: string
   variant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'ghost' | 'link' | 'warning'
@@ -24,20 +39,23 @@ const props = withDefaults(defineProps<{
   iconOnly?: boolean
   loading?: boolean
   disabled?: boolean
-
-  // Storybook style props
   backgroundColor?: string
+  fullWidth?: boolean
+  icon?: any // Vue component
+  iconPosition?: 'left' | 'right'
 }>(), {
   type: 'button',
   variant: 'primary',
   size: 'md',
   iconOnly: false,
   loading: false,
-  disabled: false
+  disabled: false,
+  fullWidth: false,
+  iconPosition: 'left'
 })
 
 const emit = defineEmits<{
-  (e: 'click', id: number): void
+  (e: 'click', event: MouseEvent): void
 }>()
 
 const computedStyle = computed(() => ({
@@ -64,18 +82,20 @@ const computedClasses = computed(() => {
   }
 
   const disabledClass = props.disabled || props.loading ? 'opacity-50 cursor-not-allowed' : ''
+  const widthClass = props.fullWidth ? 'w-full' : ''
 
   return [
     base,
     variants[props.variant] ?? variants.primary,
     sizes[props.size] ?? sizes.md,
-    disabledClass
+    disabledClass,
+    widthClass
   ]
 })
 
-const handleClick = () => {
+const handleClick = (e: MouseEvent) => {
   if (!props.disabled && !props.loading) {
-    emit('click', 1)
+    emit('click', e)
   }
 }
 </script>
