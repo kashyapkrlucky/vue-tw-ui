@@ -1,32 +1,3 @@
-<template>
-  <button v-bind="$attrs" :type="props.type" :class="[computedClasses, $attrs.class]" :style="computedStyle"
-    :disabled="props.disabled || props.loading" :aria-disabled="props.disabled || props.loading"
-    :aria-busy="props.loading" @click="handleClick">
-    <template v-if="props.loading">
-      <Loader class="animate-spin w-5 h-5" />
-    </template>
-
-    <template v-else>
-      <!-- Icon Left -->
-      <component v-if="props.icon && props.iconPosition === 'left' && !props.iconOnly" :is="props.icon"
-        class="w-4 h-4 mr-2" />
-
-      <!-- Label / Slot -->
-      <template v-if="props.iconOnly && props.icon">
-        <component :is="props.icon" class="w-5 h-5" />
-      </template>
-      <template v-else>
-        <slot v-if="$slots.default">{{ props.label }}</slot>
-        <span v-else>{{ props.label }}</span>
-      </template>
-
-      <!-- Icon Right -->
-      <component v-if="props.icon && props.iconPosition === 'right' && !props.iconOnly" :is="props.icon"
-        class="w-4 h-4 ml-2" />
-    </template>
-  </button>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Loader } from 'lucide-vue-next'
@@ -34,14 +5,16 @@ import { Loader } from 'lucide-vue-next'
 const props = withDefaults(defineProps<{
   type?: 'button' | 'submit' | 'reset'
   label?: string
-  variant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'ghost' | 'link' | 'warning'
+  variant?: 'primary' | 'secondary' | 'danger' | 'info' | 'success' | 'outline' | 'ghost' | 'link' | 'warning'
   size?: 'sm' | 'md' | 'lg'
   iconOnly?: boolean
   loading?: boolean
   disabled?: boolean
   backgroundColor?: string
   fullWidth?: boolean
-  icon?: any // Vue component
+  color?: string // Tailwind color class e.g. 'text-blue-600'
+  outline?: boolean
+  icon?: any
   iconPosition?: 'left' | 'right'
 }>(), {
   type: 'button',
@@ -51,7 +24,8 @@ const props = withDefaults(defineProps<{
   loading: false,
   disabled: false,
   fullWidth: false,
-  iconPosition: 'left'
+  iconPosition: 'left',
+  outline: false
 })
 
 const emit = defineEmits<{
@@ -62,13 +36,24 @@ const computedStyle = computed(() => ({
   backgroundColor: props.backgroundColor || undefined
 }))
 
+const iconSizeClass = computed(() => {
+  const sizes: Record<string, string> = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6'
+  }
+  return sizes[props.size] ?? 'w-5 h-5'
+})
+
 const computedClasses = computed(() => {
-  const base = 'inline-flex items-center justify-center font-semibold transition rounded cursor-pointer'
+  const base = 'inline-flex items-center justify-center font-medium transition rounded-md cursor-pointer focus:outline-none'
 
   const variants: Record<string, string> = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    primary: 'bg-indigo-500 text-white hover:bg-indigo-600',
     secondary: 'bg-gray-200 text-black hover:bg-gray-300',
     danger: 'bg-red-500 text-white hover:bg-red-600',
+    info: 'bg-blue-500 text-white hover:bg-blue-600',
+    success: 'bg-emerald-500 text-white hover:bg-emerald-600',
     warning: 'bg-yellow-400 text-black hover:bg-yellow-500',
     outline: 'border border-gray-400 text-black hover:bg-gray-100',
     ghost: 'bg-transparent text-black hover:bg-gray-100',
@@ -84,9 +69,18 @@ const computedClasses = computed(() => {
   const disabledClass = props.disabled || props.loading ? 'opacity-50 cursor-not-allowed' : ''
   const widthClass = props.fullWidth ? 'w-full' : ''
 
+  let variantClass = variants[props.variant] ?? variants.primary
+
+  if (props.outline) {
+    const borderColor = props.color || 'text-black'
+    variantClass = `border ${borderColor} bg-transparent hover:bg-gray-50`
+  } else if (props.color) {
+    variantClass = `${props.color} bg-opacity-90 hover:bg-opacity-100`
+  }
+
   return [
     base,
-    variants[props.variant] ?? variants.primary,
+    variantClass,
     sizes[props.size] ?? sizes.md,
     disabledClass,
     widthClass
@@ -99,3 +93,30 @@ const handleClick = (e: MouseEvent) => {
   }
 }
 </script>
+
+<template>
+  <button v-bind="$attrs" :type="props.type" :class="[computedClasses, $attrs.class]" :style="computedStyle"
+    :disabled="props.disabled || props.loading" :aria-disabled="props.disabled || props.loading"
+    :aria-busy="props.loading" @click="handleClick">
+
+    <template v-if="props.loading">
+      <Loader :class="iconSizeClass + ' animate-spin'" />
+    </template>
+
+    <template v-else>
+      <component v-if="props.icon && props.iconPosition === 'left' && !props.iconOnly" :is="props.icon"
+        :class="iconSizeClass + ' mr-2'" />
+
+      <template v-if="props.iconOnly && props.icon">
+        <component :is="props.icon" :class="iconSizeClass" />
+      </template>
+      <template v-else>
+        <slot v-if="$slots.default">{{ props.label }}</slot>
+        <span v-else>{{ props.label }}</span>
+      </template>
+
+      <component v-if="props.icon && props.iconPosition === 'right' && !props.iconOnly" :is="props.icon"
+        :class="iconSizeClass + ' ml-2'" />
+    </template>
+  </button>
+</template>
