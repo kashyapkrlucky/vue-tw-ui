@@ -68,7 +68,7 @@ See the full documentation and interactive examples here:
 Clone the repo:
 
 ```bash
-git clone https://github.com/your-username/vue-tw-ui.git
+git clone https://github.com/kashyapkrlucky/vue-tw-ui.git
 cd vue-tw-ui
 npm install
 ```
