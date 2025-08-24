@@ -15,10 +15,13 @@
   "main": "dist/vue-tw-ui.umd.js",
   "module": "dist/vue-tw-ui.es.js",
   "types": "dist/index.d.ts",
+  "style": "dist/vue-tw-ui.css",
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/kashyapkrlucky/vue-tw-ui"
@@ -34,7 +37,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run type-check",
+    "build": "npm-run-all2 -s build:css build:lib type-check",
+    "build:lib": "vite build",
     "build:css": "tailwindcss -i ./src/assets/main.css -o ./dist/vue-tw-ui.css --minify --content './src/**/*.{vue,js,ts}'",
     "type-check": "vue-tsc --project tsconfig.json --declaration --emitDeclarationOnly --declarationDir dist",
     "lint": "eslint . --fix",

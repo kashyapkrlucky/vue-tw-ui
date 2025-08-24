@@ -72,10 +72,30 @@ const computedClasses = computed(() => {
   let variantClass = variants[props.variant] ?? variants.primary
 
   if (props.outline) {
-    const borderColor = props.color || 'text-black'
-    variantClass = `border ${borderColor} bg-transparent hover:bg-gray-50`
+    // Outline button: ensure a border-* class. If user passed text-*, convert to border-*
+    const provided = props.color || ''
+    const borderColor = provided.startsWith('border-')
+      ? provided
+      : provided.startsWith('text-')
+        ? provided.replace('text-', 'border-')
+        : provided.startsWith('bg-')
+          ? provided.replace('bg-', 'border-')
+          : 'border-gray-400'
+    const textColor = provided.startsWith('text-') ? provided : 'text-black'
+    variantClass = `bg-transparent ${borderColor} ${textColor} hover:bg-gray-50`
   } else if (props.color) {
-    variantClass = `${props.color} bg-opacity-90 hover:bg-opacity-100`
+    // Solid/ghost/link variants overridden by color: accept bg-* or text-*; default sensible pairing
+    const provided = props.color
+    if (provided.startsWith('bg-')) {
+      // Keep given background, default text to white for contrast
+      variantClass = `${provided} text-white hover:brightness-110`
+    } else if (provided.startsWith('text-')) {
+      // Only text color override; keep neutral background
+      variantClass = `bg-gray-100 ${provided} hover:bg-gray-200`
+    } else {
+      // Fallback: apply as-is and hope it's a valid utility
+      variantClass = `${provided}`
+    }
   }
 
   return [
